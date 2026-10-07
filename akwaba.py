@@ -1,3 +1,5 @@
+import streamlit.components.v1 as components
+components.html("""<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4475933483972404" crossorigin="anonymous"></script>""", height=0)
 import streamlit as st
 from datetime import datetime
 import json
