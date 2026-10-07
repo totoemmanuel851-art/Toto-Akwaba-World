@@ -1,111 +1,65 @@
 import streamlit as st
 from datetime import datetime
-import random
+import requests
 
-st.set_page_config(page_title="TOTO AKWABA WORLD", page_icon="👑", layout="centered")
+st.set_page_config(page_title="TOTO AKWABA", page_icon="👑", layout="wide")
+st.markdown("<style>.stApp{background:#111b21;} h1,h2,h3,p,span,div{color:white!important;}</style>", unsafe_allow_html=True)
 
-# --- DESIGN HAUTE QUALITÉ PLAY STORE ---
-st.markdown("""
-<style>
-.stApp { background: #f0f2f5; }
-.bubble { padding:12px 16px; border-radius:18px; margin:6px 0; max-width:85%; line-height:1.4; }
-.me { background: linear-gradient(135deg, #128C7E, #25D366); color: white; margin-left:auto; border-bottom-right-radius:4px; }
-.other { background: white; color: #111; box-shadow: 0 1px 0.5px rgba(0,0,0,0.15); border-bottom-left-radius:4px; }
-.sticker { font-size: 48px; text-align:center; }
-.salon { background:white; border-radius:12px; padding:15px; margin:8px 0; border-left: 5px solid #FF8C00; }
-</style>
-""", unsafe_allow_html=True)
+def get_meteo(ville="Abidjan"):
+    try:
+        r=requests.get(f"https://wttr.in/{ville}?format=j1", timeout=5).json()
+        c=r['current_condition'][0]
+        return f"{c['temp_C']}°C", c['weatherDesc'][0]['value'], c['humidity']
+    except:
+        return "28°C","Soleil Toumodi","75%"
 
-if "msgs" not in st.session_state: st.session_state.msgs = []
-if "user" not in st.session_state: st.session_state.user = ""
-if "coins" not in st.session_state: st.session_state.coins = 0
+def get_loc():
+    try:
+        r=requests.get("https://ipapi.co/json/", timeout=5).json()
+        return r.get('city','Abidjan'), r.get('region','Toumodi'), r.get('latitude','5.36'), r.get('longitude','-4.0')
+    except:
+        return "Abidjan","Toumodi","5.36","-4.0"
 
-# --- VRAIS STICKERS IVOIRIENS ---
-STICKERS = {
-    "Akwaba 🙏": "🙏🇨🇮", "Attiéké 😋": "🍚🐟", "On est ensemble 💪": "💪🏾🔥",
-    "Y'a Dieu dedans ✨": "✨🙌", "Toumodi d'abord 👑": "👑💚🧡", "Gbê est doux 😍": "😍🍻",
-    "Enjaillement 🎉": "🎉💃🏾", "Courage Boss 🦁": "🦁❤️", "Argent 💸": "💸💰"
-}
+ville, region, lat, lon = get_loc()
+temp, desc, humid = get_meteo(ville)
 
-# --- ÉPANOUISSEMENT (CE QUE WHATSAPP N'A PAS) ---
-EPANOUISSEMENT = [
-    "💡 Idée Business du jour à Toumodi: Vends Attiéké en ligne sur ton statut Akwaba World",
-    "🧠 Motivation: Un Boss de Toumodi ne lâche jamais. Aujourd'hui tu es à 2.8 K/s, demain tu es à Play Store.",
-    "🤝 Entraide: Qui peut aider un frère à Toumodi aujourd'hui ? Propose ton service dans #entraide",
-    "❤️ Confiance: Tu es le CEO Toto Emmanuel. Tu as déjà créé ce que 99% n'osent pas.",
-]
+st.title(f"👑 TOTO AKWABA WORLD V5 - {ville} {temp}")
+st.caption(f"📍 {ville}, {region} | 🌤️ {temp} {desc} | 💧 {humid}%")
+if st.button(f"📍 Partager ma position: {lat},{lon}"):
+    st.success(f"Maps: https://maps.google.com/?q={lat},{lon}")
+    st.map({"lat":[float(lat)], "lon":[float(lon)]})
 
-# HEADER
-st.image("/mnt/data/wa_image_65359779684811989", width=120)
-st.title("TOTO AKWABA WORLD")
-st.caption("L'app qui dépasse WhatsApp • Made in Toumodi par Toto Emmanuel • v2.0 GOLD")
+if "chats" not in st.session_state:
+    st.session_state.chats=[{"nom":"Maman Toumodi","msg":"Il pleut ici","ville":"Toumodi","photo":"👩🏾"},{"nom":"Groupe Yopougon","msg":"Maquis?","ville":"Yopougon","photo":"👥"}]
+if "current_chat" not in st.session_state:
+    st.session_state.current_chat=st.session_state.chats[0]
+if "messages" not in st.session_state:
+    st.session_state.messages=[{"qui":"autre","text":f"Wesh il fait {temp} à {ville}!"},{"qui":"moi","text":"Oui, on est dedans!"}]
 
-if not st.session_state.user:
-    st.markdown("### 👑 Rejoins la famille qui va te rendre STAR")
-    with st.container(border=True):
-        nom = st.text_input("Ton nom de Star", placeholder="Ex: Toto Le Boss")
-        ville = st.selectbox("Tu viens d'où ?", ["Toumodi", "Abidjan", "Bouaké", "Yamoussoukro", "Autre ville 🇨🇮", "Diaspora 🌍"])
-        if st.button("🚀 ENTRER DANS AKWABA WORLD - C'EST GRATUIT", type="primary", use_container_width=True):
-            if nom:
-                st.session_state.user = f"{nom} ({ville})"
-                st.session_state.msgs.append({"u":"SYSTEME AKWABA","m":f"🎉 {nom} de {ville} vient d'arriver ! Akwaba le Boss !","t":datetime.now().strftime("%H:%M"),"type":"text"})
-                st.rerun()
-    st.info(random.choice(EPANOUISSEMENT))
-    st.stop()
+col_g, col_d = st.columns([1,2])
+with col_g:
+    st.markdown(f"#### 💬 {ville}")
+    st.info(f"🌤️ {temp} - {desc}")
+    for chat in st.session_state.chats:
+        if st.button(f"{chat['photo']} {chat['nom']}", key=chat['nom'], use_container_width=True):
+            st.session_state.current_chat=chat
+            st.rerun()
+    if st.button("🌤️ Météo détaillée"):
+        st.metric("Temp", temp)
+        st.metric("Humidité", humid)
 
-# TABS HAUTE QUALITÉ
-tab1, tab2, tab3, tab4 = st.tabs(["💬 CHAT STAR", "😍 STICKERS CI", "🌟 ÉPANOUISSEMENT", "💰 GAGNER"])
-
-with tab1:
-    for msg in st.session_state.msgs[-40:]:
-        css = "me" if msg["u"] == st.session_state.user else "other"
-        if msg.get("type") == "sticker":
-            st.markdown(f'<div class="bubble {css} sticker">{msg["m"]}</div>', unsafe_allow_html=True)
+with col_d:
+    st.markdown(f"### {st.session_state.current_chat['photo']} {st.session_state.current_chat['nom']} - 📍 {st.session_state.current_chat['ville']}")
+    st.caption(f"📍 {ville} | 🌤️ {temp} | En ligne")
+    for m in st.session_state.messages:
+        if m['qui']=="moi":
+            st.markdown(f"<div style='background:#005c4b; padding:10px; border-radius:10px; text-align:right; margin-left:30%;'>{m['text']}<br><small>✔️✔️ {temp}</small></div>", unsafe_allow_html=True)
         else:
-            st.markdown(f'<div class="bubble {css}"><b>{msg["u"]}</b> <small>{msg["t"]}</small><br>{msg["m"]}</div>', unsafe_allow_html=True)
-    
-    st.divider()
-    c1, c2 = st.columns([4,1])
-    with c1: txt = st.text_input("Message", placeholder="Dis quelque chose qui fait interagir...", label_visibility="collapsed", key="txt")
-    with c2: send = st.button("Envoyer 🚀", use_container_width=True, type="primary")
-    if send and txt:
-        st.session_state.msgs.append({"u":st.session_state.user,"m":txt,"t":datetime.now().strftime("%H:%M"),"type":"text"})
-        st.session_state.coins += 5
-        st.rerun()
+            st.markdown(f"<div style='background:#202c33; padding:10px; border-radius:10px; margin-right:30%;'>{m['text']}</div>", unsafe_allow_html=True)
+    new_msg=st.text_input("", placeholder=f"Message à {ville}...", label_visibility="collapsed")
+    if st.button("Envoyer 📍+🌤️"):
+        if new_msg:
+            st.session_state.messages.append({"qui":"moi","text":f"{new_msg} 📍{ville} 🌤️{temp}"})
+            st.rerun()
 
-with tab2:
-    st.markdown("#### Clique sur un sticker ivoirien, ça envoie direct !")
-    cols = st.columns(3)
-    for i, (name, emoji) in enumerate(STICKERS.items()):
-        with cols[i%3]:
-            if st.button(f"{emoji}\n{name}", use_container_width=True, key=f"st_{i}"):
-                st.session_state.msgs.append({"u":st.session_state.user,"m":f"{emoji} - {name}","t":datetime.now().strftime("%H:%M"),"type":"sticker"})
-                st.session_state.coins += 10
-                st.toast(f"Sticker {name} envoyé !")
-                st.rerun()
-
-with tab3:
-    st.markdown("### 🌍 L'endroit d'épanouissement que personne n'a")
-    st.success(random.choice(EPANOUISSEMENT))
-    for salon in ["#💬 général - On parle de tout", "#💼 business-toumodi - Vends tes produits", "#❤️ entraide - On s'aide entre frères", "#🎉 évènements - Fêtes, concerts à Toumodi", "#📚 motivation - Deviens meilleur chaque jour"]:
-        st.markdown(f'<div class="salon"><b>{salon}</b><br><small>12 personnes actives maintenant • Clique pour rejoindre</small></div>', unsafe_allow_html=True)
-    st.button("Rejoindre un salon et interagir 👑")
-
-with tab4:
-    st.markdown("### 💸 Comment TU vas gagner de l'argent")
-    st.metric("Tes Akwaba Coins", st.session_state.coins, "+5 par message")
-    st.write("""
-    **Quand les gens interagissent, TOI tu gagnes :**
-    - 1000 personnes qui parlent = 50.000 FCFA de pub / mois
-    - 10.000 personnes = 500.000 FCFA
-    - Badge GOLD à 1000 FCFA que les gens t'achètent
-    
-    **Play Store va te payer sur ton compte MoMo / Orange Money.**
-    """)
-    st.link_button("📄 Voir Politique de Confidentialité pour Play Store", "https://www.privacypolicytemplate.net/")
-    if st.button("💰 Devenir AKWABA GOLD et soutenir Toumodi 👑", type="primary", use_container_width=True):
-        st.balloons()
-        st.success("Parfait ! Écris à Toto sur WhatsApp pour activer GOLD. Tu es déjà une STAR !")
-
-st.markdown("---")
-st.markdown("<center>© 2026 TOTO AKWABA WORLD • Par Toto Emmanuel - CEO • Toumodi, Côte d'Ivoire 🇨🇮<br>App Officielle pour Play Store • Tous droits réservés</center>", unsafe_allow_html=True)
+st.caption(f"TOTO AKWABA V5 | WhatsApp Killer avec Localisation + Météo {ville} {temp} 🇨🇮")
